@@ -21,19 +21,19 @@ type Tracker struct {
 	// number of views
 	Views atomic.Int64
 
-	persistent bool
-	interval   time.Duration
-	maxFiles   int
+	interval time.Duration
+	maxFiles int
 }
 
 func NewTracker(persistent bool, interval time.Duration, maxFiles int) *Tracker {
 	tracker := &Tracker{
-		persistent: persistent,
-		interval:   interval,
-		maxFiles:   maxFiles,
+		interval: interval,
+		maxFiles: maxFiles,
 	}
 
-	tracker.startReporter()
+	if persistent {
+		tracker.startReporter()
+	}
 	return tracker
 }
 
@@ -69,25 +69,35 @@ func (t *Tracker) startReporter() {
 	ticker := time.Tick(t.interval)
 	go func() {
 		for range ticker {
-			path := Base.ReportPath
-			file := path + "/report-" + time.Now().Format(time.DateOnly)
-			os.WriteFile(file, t.report(), os.ModeAppend)
-
-			files, err := os.ReadDir(path)
-			if err != nil {
-				log.Println("Reporter error: " + err.Error())
-				continue
-			}
-			if len(files) >= t.maxFiles {
-				slices.SortFunc(files, func(a, b os.DirEntry) int {
-					infoA, _ := a.Info()
-					infob, _ := b.Info()
-					return infoA.ModTime().Compare(infob.ModTime())
-				})
-				os.Remove(path + "/" + files[len(files)-1].Name())
-			}
+			t.process()
 		}
 	}()
+}
+
+func (t *Tracker) process() {
+	defer func() {
+		if r := recover(); r != nil {
+			log.Printf("Receovered Panic!! Reason: %v", r)
+		}
+	}()
+
+	path := Base.ReportPath
+	file := path + "/report-" + time.Now().Format(time.DateOnly)
+	os.WriteFile(file, t.report(), os.ModeAppend)
+
+	files, err := os.ReadDir(path)
+	if err != nil {
+		log.Println("Reporter error: " + err.Error())
+		continue
+	}
+	if len(files) >= t.maxFiles {
+		slices.SortFunc(files, func(a, b os.DirEntry) int {
+			infoA, _ := a.Info()
+			infob, _ := b.Info()
+			return infoA.ModTime().Compare(infob.ModTime())
+		})
+		os.Remove(path + "/" + files[len(files)-1].Name())
+	}
 }
 
 func (t *Tracker) report() []byte {
