@@ -96,7 +96,7 @@ func (t *Tracker) process() {
 			infob, _ := b.Info()
 			return infoA.ModTime().Compare(infob.ModTime())
 		})
-		os.Remove(path + "/" + files[len(files)-1].Name())
+		os.Remove(path + "/" + files[0].Name())
 	}
 }
 
