@@ -6,11 +6,11 @@ import (
 	"gorm.io/gorm"
 )
 
-var db *gorm.DB
+var DB *gorm.DB
 
 func init() {
 	var err error
-	db, err = gorm.Open(sqlite.Open(Base.SqliteDsn), &gorm.Config{})
+	DB, err = gorm.Open(sqlite.Open(Base.SqliteDsn), &gorm.Config{})
 	if err != nil {
 		panic("Cannot open sqlite, Error: " + err.Error())
 	}

@@ -1,4 +1,4 @@
-package BuyCoffee
+package main
 
 import (
 	Base "BuyCoffee/cmd"
@@ -8,7 +8,12 @@ import (
 
 func main() {
 	fiberApp := fiber.New()
+	var err error
 	for _, app := range Base.Programs {
+		err = app.Migration()
+		if err != nil {
+			panic(err)
+		}
 		app.SetRouter(Base.BaseUrl+"/"+app.AppName(), fiberApp)
 	}
 
